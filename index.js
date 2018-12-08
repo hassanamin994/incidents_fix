@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 const moment = require('moment');
+const momentTimezone = require('moment-timezone');
 var Schema = mongoose.Schema;
+
+const TIMEZONE = "America/Whitehorse";
 
 //url - creation
 //sample - mongodb://<dbuser>:<dbpassword>@ds011459.mlab.com:11459/ilist-puma-db
@@ -34,13 +37,21 @@ incidentsModel.find({}, (err, incidents) => {
     incidents.forEach(function(incident) {
       incident = incident.toObject()
       const update = {};
-      if (incident.incident_start_date && typeof incident.incident_start_date !== 'number') {
-        const startDate = moment(new Date(incident.incident_start_date)).startOf('day').toDate().getTime();
-        update.incident_start_date = startDate;
+      if (incident.incident_start_date && typeof incident.incident_start_date == 'number') {
+        const startDate = momentTimezone(new Date(incident.incident_start_date)).tz(TIMEZONE);
+        update.incident_start_date = {
+          year: startDate.year(),
+          month: startDate.month(),
+          day: startDate.date()
+        };
       }
-      if (incident.incident_end_date && typeof incident.incident_end_date !== 'number') {
-        const endDate = moment(new Date(incident.incident_end_date)).startOf('day').toDate().getTime();
-        update.incident_end_date = endDate;
+      if (incident.incident_end_date && typeof incident.incident_end_date == 'number') {
+        const endDate = momentTimezone(new Date(incident.incident_end_date)).tz(TIMEZONE);
+        update.incident_end_date = {
+          year: endDate.year(),
+          month: endDate.month(),
+          day: endDate.date()
+        };
       }
       if ( update.incident_start_date || update.incident_end_date) {
         incidentsModel.findByIdAndUpdate(incident._id, {$set: update}, (err, r) => {
